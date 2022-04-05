@@ -235,6 +235,16 @@ test.describe('HTTP control interface', () => {
     expect(body).toContain('no settings specified in the request');
   });
 
+  test('version-only path of a non-existent version should 404', async() => {
+    const resp = await doRequest('/v99bottlesofbeeronthewall');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(404);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('Unknown command: GET /v99bottlesofbeeronthewall');
+  });
+
   test.describe('rdctl', () => {
     test('should show settings and nil-update settings', async() => {
       const { stdout, stderr } = await rdctl(['list-settings']);
@@ -437,6 +447,31 @@ test.describe('HTTP control interface', () => {
       expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
       expect(stderr).not.toContain('Usage:');
       expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
+    });
+
+    test('api: no paths should return all supported endpoints', async() => {
+      const { stdout, stderr } = await rdctl(['api', '/']);
+
+      expect(stderr).toEqual('');
+      expect(JSON.parse(stdout).sort()).toMatchObject([
+        'GET /v0/settings',
+        'PUT /v0/settings',
+        'PUT /v0/shutdown',
+        'GET /',
+        'GET /v0',
+      ].sort());
+    });
+
+    test('api: version-only path should return all endpoints in that version only', async() => {
+      const { stdout, stderr } = await rdctl(['api', '/v0']);
+
+      expect(stderr).toEqual('');
+      expect(JSON.parse(stdout).sort()).toMatchObject([
+        'GET /v0/settings',
+        'PUT /v0/settings',
+        'PUT /v0/shutdown',
+        'GET /v0',
+      ].sort());
     });
   });
 
