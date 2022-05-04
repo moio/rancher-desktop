@@ -24,8 +24,12 @@ export interface Paths {
   wslDistro: string;
   /** Directory holding the WSL data distribution (Windows-specific). */
   wslDistroData: string;
-  /** Directory holding Lima state (macOS-specific). */
+  /** dataHome: the location of the XDG data home (macOS/Linux-specific). */
+  dataHome: string;
+  /** Directory holding Lima state (macOS/Linux-specific). */
   lima: string;
+  /** Directory that used to hold Lima state (macOS-specific). */
+  oldLima: string;
   /** Directory holding provided binary resources */
   integration: string;
   /** The directory that used to hold provided binary integrations */
@@ -49,12 +53,14 @@ class ProvidesResources {
  * DarwinPaths implements paths for Darwin / macOS.
  */
 export class DarwinPaths extends ProvidesResources implements Paths {
+  dataHome = path.join(os.homedir(), '.local', 'share');
   appHome = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME);
   altAppHome = path.join(os.homedir(), '.rd');
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
   logs = process.env.RD_LOGS_DIR ?? path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
-  lima = path.join(this.appHome, 'lima');
+  lima = path.join(this.dataHome, APP_NAME, 'lima');
+  oldLima = path.join(this.appHome, 'lima');
   oldIntegration = '/usr/local/bin';
   integration = path.join(this.altAppHome, 'bin');
 
@@ -82,7 +88,15 @@ export class Win32Paths extends ProvidesResources implements Paths {
   readonly wslDistro = path.join(this.localAppData, APP_NAME, 'distro');
   readonly wslDistroData = path.join(this.localAppData, APP_NAME, 'distro-data');
 
+  get dataHome(): string {
+    throw new Error('XDG data home not available for Windows');
+  }
+
   get lima(): string {
+    throw new Error('lima not available for Windows');
+  }
+
+  get oldLima(): string {
     throw new Error('lima not available for Windows');
   }
 
@@ -99,9 +113,9 @@ export class Win32Paths extends ProvidesResources implements Paths {
  * LinuxPaths implements paths for Linux.
  */
 export class LinuxPaths extends ProvidesResources implements Paths {
-  protected readonly dataHome = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
   protected readonly configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
   protected readonly cacheHome = process.env['XDG_CACHE_HOME'] || path.join(os.homedir(), '.cache');
+  readonly dataHome = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
   readonly appHome = path.join(this.configHome, APP_NAME);
   readonly altAppHome = path.join(os.homedir(), '.rd');
   readonly config = path.join(this.configHome, APP_NAME);
@@ -110,6 +124,10 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   readonly lima = path.join(this.dataHome, APP_NAME, 'lima');
   readonly integration = path.join(this.altAppHome, 'bin');
   readonly oldIntegration = path.join(os.homedir(), '.local', 'bin');
+
+  get oldLima(): string {
+    throw new Error('lima directory was never migrated');
+  }
 
   get wslDistro(): string {
     throw new Error('wslDistro not available for Linux');

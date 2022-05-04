@@ -13,7 +13,7 @@ import * as K8s from '@/backend/k8s';
 import { Steve } from '@/backend/steve';
 import * as settings from '@/config/settings';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
-import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
+import { removeLegacySymlinks, migrateLimaFilesToNewLocation, PermissionError } from '@/integrations/legacy';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
@@ -194,6 +194,9 @@ Electron.app.whenReady().then(async() => {
           throw error;
         }
       }
+    }
+    if (os.platform() === 'darwin') {
+      await migrateLimaFilesToNewLocation();
     }
 
     await startBackend(cfg);
