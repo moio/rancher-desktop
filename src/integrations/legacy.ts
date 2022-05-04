@@ -1,5 +1,8 @@
+import fs from 'fs';
+import { constants } from 'node:fs';
 import path from 'path';
 import { manageSymlink } from '@/integrations/unixIntegrationManager';
+import paths from '@/utils/paths';
 
 const LEGACY_INTEGRATION_NAMES = [
   'docker',
@@ -53,5 +56,26 @@ export async function removeLegacySymlinks(legacyIntegrationDir: string): Promis
 
   if (permissionErrors.length > 0) {
     throw new PermissionError(permissionErrors);
+  }
+}
+
+// Moves lima content into the new location. Idempotent.
+export async function migrateLima() {
+  try {
+    await fs.promises.access(paths.oldLima, constants.R_OK | constants.W_OK)
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      // there is no directory to move, done already
+      return;
+    } else {
+      throw new Error(`Can't test for ${ paths.oldLima }: err`);
+    }
+  }
+
+  try {
+    await fs.promises.rename(paths.oldLima, paths.lima)
+  }
+  catch (err: any) {
+    throw new Error(`Can't migrate lima configuration to ${ paths.lima }: err`);
   }
 }

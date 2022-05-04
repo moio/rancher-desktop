@@ -30,7 +30,7 @@ import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
-import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
+import { removeLegacySymlinks, migrateLima, PermissionError } from '@/integrations/legacy';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -179,6 +179,7 @@ Electron.app.whenReady().then(async() => {
           throw error;
         }
       }
+      await migrateLima();
     }
 
     await startBackend(cfg);

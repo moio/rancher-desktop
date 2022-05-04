@@ -87,7 +87,7 @@ func setupLimaHome() error {
 	if runtime.GOOS == "linux" {
 		candidatePath = path.Join(os.Getenv("HOME"), ".local", "share", "rancher-desktop", "lima")
 	} else {
-		candidatePath = path.Join(os.Getenv("HOME"), "Library", "Application Support", "rancher-desktop", "lima")
+		candidatePath = path.Join(os.Getenv("HOME"), ".rd", "lima")
 	}
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
